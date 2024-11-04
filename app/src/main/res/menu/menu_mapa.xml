@@ -2,9 +2,15 @@
 <menu xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android">
 
+
+    <item
+        android:id="@+id/listaUsuariosDisponibles"
+        android:title="Usuarios disponibles"
+        android:icon="@drawable/baseline_format_list_bulleted_24"
+        app:showAsAction="ifRoom"/>
     <item
         android:id="@+id/dispobileButton"
-        android:title="Est. Disponible"
+        android:title="Estado Disponible"
         android:icon="@drawable/baseline_check_circle_outline_24"
         app:showAsAction="ifRoom"
         />

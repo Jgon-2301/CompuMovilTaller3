@@ -63,9 +63,7 @@ class MapActivity : AppCompatActivity(), LocationListener {
         setSupportActionBar(toolbar)
 
         loadJson()
-
-
-
+        setJsonLocations()
     }
 
 
@@ -100,6 +98,25 @@ class MapActivity : AppCompatActivity(), LocationListener {
         }
     }
 
+    fun setJsonLocations(){
+        for(i in jsonLocations){
+            var geoPoint = GeoPoint(i.latitud, i.longitud)
+            var marker = Marker(map).apply {
+                position = geoPoint
+                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                title = i.nombre
+
+                icon = ContextCompat.getDrawable(this@MapActivity, R.drawable.baseline_museum_24)?.let { drawable ->
+                    vectorToBitmap(drawable)
+                }?.let { bitmap ->
+                    BitmapDrawable(resources, bitmap)
+                }
+
+                map.overlays.add(this)
+            }
+        }
+    }
+
     private fun requestLocationUpdates() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
             ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -112,6 +129,7 @@ class MapActivity : AppCompatActivity(), LocationListener {
             lastKnownLocation?.let { onLocationChanged(it) }
         }
     }
+
 
     override fun onLocationChanged(location: Location) {
         val newGeoPoint = GeoPoint(location.latitude, location.longitude)
