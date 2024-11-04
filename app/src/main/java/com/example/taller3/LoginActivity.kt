@@ -35,6 +35,12 @@ class LoginActivity : AppCompatActivity() {
 
             }
         }
+
+        binding.logInTextView.setOnClickListener {
+            startActivity(Intent(this, RegisterActivity::class.java))
+        }
+
+
     }
 
     override fun onStart() {
