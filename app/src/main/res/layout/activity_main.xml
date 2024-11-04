@@ -43,7 +43,8 @@
             android:backgroundTint="@android:color/black"
             android:elevation="4dp"
             android:padding="12dp"
-            android:text="Login"
+            android:text="Iniciar Sesión"
+            android:textSize="17dp"
             android:textColor="@android:color/white" />
 
         <Button
@@ -56,6 +57,7 @@
             android:elevation="4dp"
             android:padding="12dp"
             android:text="Registrarse"
+            android:textSize="17dp"
             android:textColor="@android:color/white" />
     </LinearLayout>
 
