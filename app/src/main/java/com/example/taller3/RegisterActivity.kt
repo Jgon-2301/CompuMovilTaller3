@@ -99,7 +99,10 @@ class RegisterActivity : AppCompatActivity() {
                                         name = firstName,
                                         lastName = lastName,
                                         email = email,
-                                        id_number = userId
+                                        id_number = userId,
+                                        latitude = 0.0,
+                                        longitude = 0.0,
+                                        isAvailable = false
                                     )
 
                                     saveUserDataToDatabase(user.uid, newUser)
@@ -181,3 +184,5 @@ class RegisterActivity : AppCompatActivity() {
         return valid
     }
 }
+
+

@@ -34,9 +34,6 @@ import org.json.JSONObject
 class MapActivity : AppCompatActivity(), LocationListener {
     private lateinit var binding: ActivityMapBinding
     lateinit var jsonLocations : MutableList<JsonLocation>
-
-
-
     private lateinit var map: MapView
     private lateinit var mapController: IMapController
     private lateinit var locationManager: LocationManager
