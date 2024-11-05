@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.taller3.adapters.UserRecyclerAdapter
 import com.example.taller3.databinding.ActivityActiveUsersBinding
 import com.example.taller3.model.User
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
@@ -23,6 +24,8 @@ class ActiveUsersActivity : AppCompatActivity() {
     private val database = FirebaseDatabase.getInstance().reference.child("users")
     private val availableUsers = mutableListOf<User>()
     private val storageRef = FirebaseStorage.getInstance().reference
+    private lateinit var mAuth: FirebaseAuth
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,7 +33,6 @@ class ActiveUsersActivity : AppCompatActivity() {
         binding = ActivityActiveUsersBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Configura el RecyclerView
         adapter = UserRecyclerAdapter(availableUsers) { user ->
             showUserLocationOnMap(user)
         }
@@ -48,8 +50,12 @@ class ActiveUsersActivity : AppCompatActivity() {
                     availableUsers.clear()
                     for (userSnapshot in snapshot.children) {
                         val user = userSnapshot.getValue(User::class.java)
+                        val currentUser = mAuth.currentUser
                         if (user != null) {
-                            loadImageWithFallback(user, userSnapshot.key ?: "")
+                            if (currentUser != null) {
+                                if(userSnapshot.key!=currentUser.uid)
+                                    loadImageWithFallback(user, userSnapshot.key ?: "")
+                            }
                         }
                     }
                 }
