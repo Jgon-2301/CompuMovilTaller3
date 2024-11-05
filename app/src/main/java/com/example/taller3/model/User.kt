@@ -8,6 +8,8 @@ class User {
     var latitude: Double = 0.0
     var longitude: Double = 0.0
     var available: Boolean = false
+    var profileImageUrl: String? = null
+
 
     constructor()
     constructor(name: String, lastName: String, email: String, id_number: String, latitude: Double, longitude: Double, available: Boolean) {
