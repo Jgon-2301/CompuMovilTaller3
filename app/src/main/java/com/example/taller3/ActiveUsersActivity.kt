@@ -33,6 +33,8 @@ class ActiveUsersActivity : AppCompatActivity() {
         binding = ActivityActiveUsersBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        mAuth = FirebaseAuth.getInstance()
+
         adapter = UserRecyclerAdapter(availableUsers) { user ->
             showUserLocationOnMap(user)
         }
@@ -45,7 +47,7 @@ class ActiveUsersActivity : AppCompatActivity() {
 
     private fun loadAvailableUsers() {
         database.orderByChild("available").equalTo(true)
-            .addListenerForSingleValueEvent(object : ValueEventListener {
+            .addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     availableUsers.clear()
                     for (userSnapshot in snapshot.children) {
@@ -58,6 +60,7 @@ class ActiveUsersActivity : AppCompatActivity() {
                             }
                         }
                     }
+
                 }
 
                 override fun onCancelled(error: DatabaseError) {
