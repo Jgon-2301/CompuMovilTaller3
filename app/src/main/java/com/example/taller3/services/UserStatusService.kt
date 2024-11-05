@@ -33,6 +33,27 @@ class UserStatusService : Service() {
     }
 
     private fun listenForAvailableUsers() {
+        database.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                for (userSnapshot in snapshot.children) {
+                    val user = userSnapshot.getValue(User::class.java)
+                    val userId = userSnapshot.key
+
+                    if (user != null && userId != null) {
+                        userStatusMap[userId.toString()] = user.available
+                    }
+                }
+
+                addRealtimeListener()
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.e("UserStatusService", "Error al cargar usuarios iniciales: ${error.message}")
+            }
+        })
+    }
+
+    private fun addRealtimeListener() {
         userListener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 for (userSnapshot in snapshot.children) {
