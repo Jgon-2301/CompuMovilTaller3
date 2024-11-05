@@ -1,5 +1,5 @@
 # CompuMovilTaller3
 
-##Integrantes
+## Integrantes
 - Juan Felipe Gonzalez Quintero
 - Diego Alejandro Jara Rojas
