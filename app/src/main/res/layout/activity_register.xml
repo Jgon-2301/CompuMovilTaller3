@@ -152,13 +152,15 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
+        android:layout_marginTop="52dp"
         android:layout_marginBottom="52dp"
         android:text="Imagen Perfil:"
         android:textColor="@color/white"
         android:textSize="25sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toTopOf="@+id/Name"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/RegisterTitle" />
 
     <ImageButton
         android:id="@+id/imageButton"
@@ -174,6 +176,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/textImagenContacto"
         app:layout_constraintTop_toBottomOf="@+id/RegisterTitle"
-        tools:srcCompat="@tools:sample/avatars" />
+        android:src="@drawable/pictures"
+        />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

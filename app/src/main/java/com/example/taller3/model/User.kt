@@ -7,17 +7,17 @@ class User {
     lateinit var id_number: String
     var latitude: Double = 0.0
     var longitude: Double = 0.0
-    var isAvailable: Boolean = false
+    var available: Boolean = false
 
     constructor()
-    constructor(name: String, lastName: String, email: String, id_number: String, latitude: Double, longitude: Double, isAvailable: Boolean) {
+    constructor(name: String, lastName: String, email: String, id_number: String, latitude: Double, longitude: Double, available: Boolean) {
         this.name = name
         this.lastName = lastName
         this.email = email
         this.id_number = id_number
         this.latitude = latitude
         this.longitude = longitude
-        this.isAvailable = isAvailable
+        this.available = available
     }
 
 }

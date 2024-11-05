@@ -33,7 +33,7 @@
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="300dp"
         android:background="@drawable/edit_text_background"
-        android:hint="Username"
+        android:hint="Email"
         android:padding="10dp"
         android:textColor="@android:color/black" />
 

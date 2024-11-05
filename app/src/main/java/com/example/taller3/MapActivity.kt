@@ -32,21 +32,36 @@ import org.osmdroid.views.overlay.Marker
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.Drawable
+import com.google.firebase.storage.FirebaseStorage
 
 class MapActivity : AppCompatActivity(), LocationListener {
     private lateinit var binding: ActivityMapBinding
+
+    //Variables mapa
     private lateinit var map: MapView
     private lateinit var mapController: IMapController
     private lateinit var locationManager: LocationManager
     private var currentLocationMarker: Marker? = null
-    private val database = FirebaseDatabase.getInstance()
+
+    //Variables database
+    private lateinit var mAuth: FirebaseAuth
+    private lateinit var database: FirebaseDatabase
     private val userUid = FirebaseAuth.getInstance().currentUser?.uid
+    private val USERS = "users/"
+    private val TAG = "FIREBASE_APP"
+    private val storageRef = FirebaseStorage.getInstance().reference
+
+    //Variables otras
     private var jsonLocations = mutableListOf<JsonLocation>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMapBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        //Configuracion base de datos
+        mAuth = FirebaseAuth.getInstance()
+        database = FirebaseDatabase.getInstance()
 
         // Configuración inicial del mapa
         Configuration.getInstance().load(applicationContext, androidx.preference.PreferenceManager.getDefaultSharedPreferences(applicationContext))
@@ -73,12 +88,33 @@ class MapActivity : AppCompatActivity(), LocationListener {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId == R.id.logOut) {
-            FirebaseAuth.getInstance().signOut()
-            startActivity(Intent(this, MainActivity::class.java))
-            finish()
+        return when (item.itemId) {
+            R.id.logOut -> {
+                mAuth.signOut()
+                startActivity(Intent(this, MainActivity::class.java))
+                finish()
+                true
+            }
+            R.id.dispobileButton -> {
+                cambiarDisponibilidad()
+                true
+            }
+            R.id.listaUsuariosDisponibles -> {
+                startActivity(Intent(this, ActiveUsersActivity::class.java))
+                finish()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
         }
-        return super.onOptionsItemSelected(item)
+    }
+
+    private fun cambiarDisponibilidad() {
+        val user = mAuth.currentUser
+        if (user != null) {
+            val userRef = database.getReference(USERS).child(user.uid)
+            userRef.child("available").setValue(true)
+            Toast.makeText(this, "Estado de disponibilidad actualizado", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun requestLocationUpdates() {

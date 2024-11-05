@@ -28,6 +28,7 @@ class RegisterActivity : AppCompatActivity() {
     private var selectedImageUri: Uri? = null
 
 
+
     val galleryLauncher = registerForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri ->
@@ -70,6 +71,20 @@ class RegisterActivity : AppCompatActivity() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        updateUI(mAuth.currentUser)
+    }
+
+    private fun updateUI(currentUser: FirebaseUser?) {
+        if (currentUser != null) {
+            val intent = Intent(this, MapActivity::class.java)
+            intent.putExtra("email", currentUser.email)
+            startActivity(intent)
+            finish()
+        }
+    }
+
 
     private fun loadImage(uri: Uri) {
         val imageStream = getContentResolver().openInputStream(uri)
@@ -102,7 +117,7 @@ class RegisterActivity : AppCompatActivity() {
                                         id_number = userId,
                                         latitude = 0.0,
                                         longitude = 0.0,
-                                        isAvailable = false
+                                        available = false
                                     )
 
                                     saveUserDataToDatabase(user.uid, newUser)
@@ -147,14 +162,7 @@ class RegisterActivity : AppCompatActivity() {
         }
     }
 
-    private fun updateUI(currentUser: FirebaseUser?) {
-        if (currentUser != null) {
-            val intent = Intent(this, MapActivity::class.java)
-            intent.putExtra("email", currentUser.email)
-            startActivity(intent)
-            finish() // Cierra la actividad actual para evitar que el usuario vuelva atrás
-        }
-    }
+
 
     private fun validateForm(email: String, password: String, firstName: String, lastName: String, userId: String): Boolean {
         var valid = true
@@ -179,6 +187,10 @@ class RegisterActivity : AppCompatActivity() {
         }
         if (userId.isEmpty()) {
             binding.IDEditText.error = "Campo requerido"
+            valid = false
+        }
+        if (selectedImageUri == null) {
+            Toast.makeText(this, "Seleccione una imagen de perfil", Toast.LENGTH_LONG).show()
             valid = false
         }
         return valid
