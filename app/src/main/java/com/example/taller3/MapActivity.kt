@@ -11,13 +11,18 @@ import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import androidx.appcompat.widget.Toolbar
-import androidx.activity.enableEdgeToEdge
 import android.widget.Toast
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.taller3.databinding.ActivityMapBinding
+import com.example.taller3.model.JsonLocation
+import com.example.taller3.model.User
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
+import org.json.JSONObject
 import org.osmdroid.api.IMapController
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
@@ -27,17 +32,16 @@ import org.osmdroid.views.overlay.Marker
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.Drawable
-import android.graphics.drawable.VectorDrawable
-import com.example.taller3.model.JsonLocation
-import org.json.JSONObject
 
 class MapActivity : AppCompatActivity(), LocationListener {
     private lateinit var binding: ActivityMapBinding
-    lateinit var jsonLocations : MutableList<JsonLocation>
     private lateinit var map: MapView
     private lateinit var mapController: IMapController
     private lateinit var locationManager: LocationManager
     private var currentLocationMarker: Marker? = null
+    private val database = FirebaseDatabase.getInstance()
+    private val userUid = FirebaseAuth.getInstance().currentUser?.uid
+    private var jsonLocations = mutableListOf<JsonLocation>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,17 +56,16 @@ class MapActivity : AppCompatActivity(), LocationListener {
         mapController = map.controller
         mapController.setZoom(18.0)
 
-        // Inicializar el LocationManager
         locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
         requestLocationUpdates()
 
         val toolbar = findViewById<Toolbar>(R.id.toolbar_menu)
         setSupportActionBar(toolbar)
 
+        // Cargar y configurar los marcadores desde el archivo JSON
         loadJson()
         setJsonLocations()
     }
-
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_mapa, menu)
@@ -70,48 +73,12 @@ class MapActivity : AppCompatActivity(), LocationListener {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        val clicked = item.itemId
-        if(clicked == R.id.logOut){
-            //auth.signOut()
-            val i = Intent(this, MainActivity::class.java)
-            //intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            startActivity(i)
+        if (item.itemId == R.id.logOut) {
+            FirebaseAuth.getInstance().signOut()
+            startActivity(Intent(this, MainActivity::class.java))
+            finish()
         }
         return super.onOptionsItemSelected(item)
-    }
-
-    fun loadJson() {
-        jsonLocations = mutableListOf<JsonLocation>()
-        val json_string = this.assets.open("locations.json").bufferedReader().use{ it.readText() }
-        var json = JSONObject(json_string);
-        var locationJsonArray = json.getJSONArray("locationsArray");
-        for (i in 0..locationJsonArray.length()-1) {
-            val jsonObject = locationJsonArray.getJSONObject(i)
-            val latitude = jsonObject.getString("latitude").toDouble()
-            val longitude = jsonObject.getString("longitude").toDouble()
-            val name = jsonObject.getString("name")
-            val jsonLocation = JsonLocation(latitude, longitude, name)
-            jsonLocations.add(jsonLocation)
-        }
-    }
-
-    fun setJsonLocations(){
-        for(i in jsonLocations){
-            var geoPoint = GeoPoint(i.latitud, i.longitud)
-            var marker = Marker(map).apply {
-                position = geoPoint
-                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                title = i.nombre
-
-                icon = ContextCompat.getDrawable(this@MapActivity, R.drawable.baseline_museum_24)?.let { drawable ->
-                    vectorToBitmap(drawable)
-                }?.let { bitmap ->
-                    BitmapDrawable(resources, bitmap)
-                }
-
-                map.overlays.add(this)
-            }
-        }
     }
 
     private fun requestLocationUpdates() {
@@ -122,11 +89,9 @@ class MapActivity : AppCompatActivity(), LocationListener {
                 Manifest.permission.ACCESS_COARSE_LOCATION), 1)
         } else {
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 30f, this)
-            val lastKnownLocation: Location? = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-            lastKnownLocation?.let { onLocationChanged(it) }
+            locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)?.let { onLocationChanged(it) }
         }
     }
-
 
     override fun onLocationChanged(location: Location) {
         val newGeoPoint = GeoPoint(location.latitude, location.longitude)
@@ -137,14 +102,11 @@ class MapActivity : AppCompatActivity(), LocationListener {
                 position = newGeoPoint
                 setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                 title = "Mi Ubicación"
-
-                // Configurar el ícono personalizado para el marcador
                 icon = ContextCompat.getDrawable(this@MapActivity, R.drawable.baseline_location_pin_24)?.let { drawable ->
                     vectorToBitmap(drawable)
                 }?.let { bitmap ->
                     BitmapDrawable(resources, bitmap)
                 }
-
                 map.overlays.add(this)
             }
         } else {
@@ -154,11 +116,22 @@ class MapActivity : AppCompatActivity(), LocationListener {
         // Mover la cámara a la nueva ubicación
         mapController.animateTo(newGeoPoint)
         map.invalidate()
+
+        userUid?.let { uid ->
+            val userRef = database.getReference("users").child(uid)
+            userRef.child("latitude").setValue(location.latitude)
+            userRef.child("longitude").setValue(location.longitude)
+                .addOnSuccessListener {
+                    Log.d("MapActivity", "Latitud y longitud actualizadas en Firebase.")
+                }
+                .addOnFailureListener { exception ->
+                    Log.e("MapActivity", "Error al actualizar la ubicación: ${exception.message}")
+                }
+        }
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults) // Llama a la implementación de super
-
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == 1 && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             requestLocationUpdates()
         } else {
@@ -175,9 +148,8 @@ class MapActivity : AppCompatActivity(), LocationListener {
         super.onResume()
         map.onResume()
     }
-}
 
-    fun vectorToBitmap(drawable: Drawable): Bitmap {
+    private fun vectorToBitmap(drawable: Drawable): Bitmap {
         val bitmap = Bitmap.createBitmap(
             drawable.intrinsicWidth,
             drawable.intrinsicHeight,
@@ -188,4 +160,41 @@ class MapActivity : AppCompatActivity(), LocationListener {
         drawable.draw(canvas)
         return bitmap
     }
+
+    // Función para cargar ubicaciones desde un archivo JSON en el directorio de assets
+    private fun loadJson() {
+        jsonLocations = mutableListOf<JsonLocation>()
+        val jsonString = this.assets.open("locations.json").bufferedReader().use { it.readText() }
+        val json = JSONObject(jsonString)
+        val locationJsonArray = json.getJSONArray("locationsArray")
+        for (i in 0 until locationJsonArray.length()) {
+            val jsonObject = locationJsonArray.getJSONObject(i)
+            val latitude = jsonObject.getString("latitude").toDouble()
+            val longitude = jsonObject.getString("longitude").toDouble()
+            val name = jsonObject.getString("name")
+            val jsonLocation = JsonLocation(latitude, longitude, name)
+            jsonLocations.add(jsonLocation)
+        }
+    }
+
+    // Función para configurar los marcadores en el mapa usando las ubicaciones del archivo JSON
+    private fun setJsonLocations() {
+        for (location in jsonLocations) {
+            val geoPoint = GeoPoint(location.latitud, location.longitud)
+            val marker = Marker(map).apply {
+                position = geoPoint
+                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                title = location.nombre
+                icon = ContextCompat.getDrawable(this@MapActivity, R.drawable.baseline_museum_24)?.let { drawable ->
+                    vectorToBitmap(drawable)
+                }?.let { bitmap ->
+                    BitmapDrawable(resources, bitmap)
+                }
+                map.overlays.add(this)
+            }
+        }
+    }
+}
+
+
 
