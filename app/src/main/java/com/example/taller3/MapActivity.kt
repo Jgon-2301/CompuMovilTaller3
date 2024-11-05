@@ -37,21 +37,17 @@ import com.google.firebase.storage.FirebaseStorage
 class MapActivity : AppCompatActivity(), LocationListener {
     private lateinit var binding: ActivityMapBinding
 
-    //Variables mapa
+
     private lateinit var map: MapView
     private lateinit var mapController: IMapController
     private lateinit var locationManager: LocationManager
     private var currentLocationMarker: Marker? = null
-
-    //Variables database
     private lateinit var mAuth: FirebaseAuth
     private lateinit var database: FirebaseDatabase
     private val userUid = FirebaseAuth.getInstance().currentUser?.uid
     private val USERS = "users/"
     private val TAG = "FIREBASE_APP"
     private val storageRef = FirebaseStorage.getInstance().reference
-
-    //Variables otras
     private var jsonLocations = mutableListOf<JsonLocation>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -59,7 +55,7 @@ class MapActivity : AppCompatActivity(), LocationListener {
         binding = ActivityMapBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        //Configuracion base de datos
+
         mAuth = FirebaseAuth.getInstance()
         database = FirebaseDatabase.getInstance()
 
@@ -77,7 +73,7 @@ class MapActivity : AppCompatActivity(), LocationListener {
         val toolbar = findViewById<Toolbar>(R.id.toolbar_menu)
         setSupportActionBar(toolbar)
 
-        // Cargar y configurar los marcadores desde el archivo JSON
+
         loadJson()
         setJsonLocations()
     }
@@ -231,6 +227,7 @@ class MapActivity : AppCompatActivity(), LocationListener {
         }
     }
 }
+
 
 
 

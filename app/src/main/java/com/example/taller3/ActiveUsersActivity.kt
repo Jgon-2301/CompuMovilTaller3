@@ -104,7 +104,7 @@ class ActiveUsersActivity : AppCompatActivity() {
     }
 
     private fun showUserLocationOnMap(user: User) {
-        val intent = Intent(this, MapActivity::class.java).apply {
+        val intent = Intent(this, OtherUserMapActivity::class.java).apply {
             putExtra("latitude", user.latitude)
             putExtra("longitude", user.longitude)
             putExtra("userName", "${user.name} ${user.lastName}")
