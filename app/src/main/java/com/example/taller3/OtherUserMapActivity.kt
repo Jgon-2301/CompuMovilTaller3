@@ -48,7 +48,7 @@ class OtherUserMapActivity : AppCompatActivity(), LocationListener {
     private val TAG = "FIREBASE_APP"
     private val storageRef = FirebaseStorage.getInstance().reference
     private var jsonLocations = mutableListOf<JsonLocation>()
-
+    private var observedUserLocation: GeoPoint? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -156,6 +156,11 @@ class OtherUserMapActivity : AppCompatActivity(), LocationListener {
         }
         map.invalidate()
 
+        observedUserLocation?.let { observedLocation ->
+            val distanceInMeters = newGeoPoint.distanceToAsDouble(observedLocation)
+            Toast.makeText(this, "La distancia a la posición del usuario observado es de: ${distanceInMeters.toInt()} metros", Toast.LENGTH_LONG).show()
+        }
+
         userUid?.let { uid ->
             val userRef = database.getReference("users").child(uid)
             userRef.child("latitude").setValue(location.latitude)
@@ -236,6 +241,7 @@ class OtherUserMapActivity : AppCompatActivity(), LocationListener {
 
     private fun setUserMarker(latitude: Double, longitude: Double, userName: String) {
         val geoPoint = GeoPoint(latitude, longitude)
+        observedUserLocation = geoPoint
         val marker = Marker(map).apply {
             position = geoPoint
             setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
@@ -251,5 +257,4 @@ class OtherUserMapActivity : AppCompatActivity(), LocationListener {
         mapController.setZoom(18.0)
         map.invalidate()
     }
-
 }

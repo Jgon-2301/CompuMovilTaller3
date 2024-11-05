@@ -26,8 +26,6 @@ class ActiveUsersActivity : AppCompatActivity() {
     private val storageRef = FirebaseStorage.getInstance().reference
     private lateinit var mAuth: FirebaseAuth
 
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityActiveUsersBinding.inflate(layoutInflater)
