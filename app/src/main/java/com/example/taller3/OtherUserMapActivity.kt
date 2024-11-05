@@ -12,14 +12,12 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.taller3.databinding.ActivityOtherUserMapBinding
 import com.example.taller3.model.JsonLocation
-import com.example.taller3.model.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import org.json.JSONObject
@@ -32,6 +30,9 @@ import org.osmdroid.views.overlay.Marker
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.Drawable
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
 
 class OtherUserMapActivity : AppCompatActivity(), LocationListener {
@@ -41,6 +42,7 @@ class OtherUserMapActivity : AppCompatActivity(), LocationListener {
     private lateinit var mapController: IMapController
     private lateinit var locationManager: LocationManager
     private var currentLocationMarker: Marker? = null
+    private var observedUserMarker: Marker? = null
     private lateinit var mAuth: FirebaseAuth
     private lateinit var database: FirebaseDatabase
     private val userUid = FirebaseAuth.getInstance().currentUser?.uid
@@ -49,6 +51,7 @@ class OtherUserMapActivity : AppCompatActivity(), LocationListener {
     private val storageRef = FirebaseStorage.getInstance().reference
     private var jsonLocations = mutableListOf<JsonLocation>()
     private var observedUserLocation: GeoPoint? = null
+    private lateinit var userName: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -77,10 +80,17 @@ class OtherUserMapActivity : AppCompatActivity(), LocationListener {
 
         val userLatitude = intent.getDoubleExtra("latitude", 0.0)
         val userLongitude = intent.getDoubleExtra("longitude", 0.0)
-        val userName = intent.getStringExtra("userName") ?: "Usuario"
+        userName = intent.getStringExtra("userName") ?: "Usuario"
 
         if (userLatitude != 0.0 && userLongitude != 0.0) {
             setUserMarker(userLatitude, userLongitude, userName)
+        }
+
+        val userEmail = intent.getStringExtra("userEmail")
+        if (userEmail != null) {
+            observeUserLocationByEmail(userEmail)
+        } else {
+            Log.e(TAG, "No se proporcionó el correo electrónico del usuario observado")
         }
     }
 
@@ -134,7 +144,6 @@ class OtherUserMapActivity : AppCompatActivity(), LocationListener {
     override fun onLocationChanged(location: Location) {
         val newGeoPoint = GeoPoint(location.latitude, location.longitude)
 
-        // Crear o actualizar el marcador de ubicación actual con el ícono personalizado
         if (currentLocationMarker == null) {
             currentLocationMarker = Marker(map).apply {
                 position = newGeoPoint
@@ -205,7 +214,6 @@ class OtherUserMapActivity : AppCompatActivity(), LocationListener {
         return bitmap
     }
 
-    // Función para cargar ubicaciones desde un archivo JSON en el directorio de assets
     private fun loadJson() {
         jsonLocations = mutableListOf<JsonLocation>()
         val jsonString = this.assets.open("locations.json").bufferedReader().use { it.readText() }
@@ -221,7 +229,6 @@ class OtherUserMapActivity : AppCompatActivity(), LocationListener {
         }
     }
 
-    // Función para configurar los marcadores en el mapa usando las ubicaciones del archivo JSON
     private fun setJsonLocations() {
         for (location in jsonLocations) {
             val geoPoint = GeoPoint(location.latitud, location.longitud)
@@ -242,19 +249,72 @@ class OtherUserMapActivity : AppCompatActivity(), LocationListener {
     private fun setUserMarker(latitude: Double, longitude: Double, userName: String) {
         val geoPoint = GeoPoint(latitude, longitude)
         observedUserLocation = geoPoint
-        val marker = Marker(map).apply {
-            position = geoPoint
-            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-            title = userName
-            icon = ContextCompat.getDrawable(this@OtherUserMapActivity, R.drawable.baseline_location_pin_other)?.let { drawable ->
-                vectorToBitmap(drawable)
-            }?.let { bitmap ->
-                BitmapDrawable(resources, bitmap)
+        if (observedUserMarker == null) {
+            observedUserMarker = Marker(map).apply {
+                position = geoPoint
+                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                title = userName
+                icon = ContextCompat.getDrawable(this@OtherUserMapActivity, R.drawable.baseline_location_pin_other)?.let { drawable ->
+                    vectorToBitmap(drawable)
+                }?.let { bitmap ->
+                    BitmapDrawable(resources, bitmap)
+                }
+                map.overlays.add(this)
             }
-            map.overlays.add(this)
+        } else {
+            observedUserMarker?.position = geoPoint
         }
         mapController.animateTo(geoPoint)
-        mapController.setZoom(18.0)
-        map.invalidate()
+    }
+
+    private fun observeUserLocationByEmail(userEmail: String) {
+        val usersRef = database.getReference("users")
+        val query = usersRef.orderByChild("email").equalTo(userEmail)
+
+        query.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                for (userSnapshot in snapshot.children) {
+                    val latitude = userSnapshot.child("latitude").getValue(Double::class.java)
+                    val longitude = userSnapshot.child("longitude").getValue(Double::class.java)
+
+                    if (latitude != null && longitude != null) {
+                        val geoPoint = GeoPoint(latitude, longitude)
+
+                        if (observedUserMarker == null) {
+                            observedUserMarker = Marker(map).apply {
+                                position = geoPoint
+                                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                                title = userName
+                                icon = ContextCompat.getDrawable(this@OtherUserMapActivity, R.drawable.baseline_location_pin_other)?.let { drawable ->
+                                    vectorToBitmap(drawable)
+                                }?.let { bitmap ->
+                                    BitmapDrawable(resources, bitmap)
+                                }
+                                map.overlays.add(this)
+                            }
+                        } else {
+                            observedUserMarker?.position = geoPoint
+                        }
+
+                        currentLocationMarker?.position?.let { currentGeoPoint ->
+                            val distanceInMeters = currentGeoPoint.distanceToAsDouble(geoPoint)
+                            Toast.makeText(
+                                this@OtherUserMapActivity,
+                                "Distancia a la ubicación del usuario observado: ${distanceInMeters.toInt()} metros",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+
+                        mapController.animateTo(geoPoint)
+                        map.invalidate()
+                    }
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.e(TAG, "Error al escuchar cambios: ${error.message}")
+            }
+        })
     }
 }
+

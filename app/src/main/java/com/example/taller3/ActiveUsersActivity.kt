@@ -106,6 +106,7 @@ class ActiveUsersActivity : AppCompatActivity() {
             putExtra("latitude", user.latitude)
             putExtra("longitude", user.longitude)
             putExtra("userName", "${user.name} ${user.lastName}")
+            putExtra("userEmail", user.email)
         }
         startActivity(intent)
     }
