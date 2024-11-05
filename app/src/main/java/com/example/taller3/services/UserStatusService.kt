@@ -83,6 +83,7 @@ class UserStatusService : Service() {
             putExtra("latitude", user.latitude)
             putExtra("longitude", user.longitude)
             putExtra("userName", "${user.name} ${user.lastName}")
+            putExtra("userEmail", user.email)
         }
 
         val targetActivity = if (auth.currentUser != null) OtherUserMapActivity::class.java else MainActivity::class.java

@@ -82,11 +82,18 @@ class OtherUserMapActivity : AppCompatActivity(), LocationListener {
         val userLongitude = intent.getDoubleExtra("longitude", 0.0)
         userName = intent.getStringExtra("userName") ?: "Usuario"
 
+
         if (userLatitude != 0.0 && userLongitude != 0.0) {
             setUserMarker(userLatitude, userLongitude, userName)
         }
 
         val userEmail = intent.getStringExtra("userEmail")
+        Log.e("Llegado", userName)
+        Log.e("Llegado", userLatitude.toString())
+        Log.e("Llegado", userLongitude.toString())
+        Log.e("Llegado", userEmail.toString())
+
+
         if (userEmail != null) {
             observeUserLocationByEmail(userEmail)
         } else {
