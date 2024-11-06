@@ -58,10 +58,12 @@ class UserStatusService : Service() {
             override fun onDataChange(snapshot: DataSnapshot) {
                 for (userSnapshot in snapshot.children) {
                     val user = userSnapshot.getValue(User::class.java)
-                    val currentUser = auth.currentUser
                     val userId = userSnapshot.key
 
-                    if (user != null && currentUser != null && userId != currentUser.uid) {
+                    val currentUser = auth.currentUser
+                    val isSelf = currentUser != null && userId == currentUser.uid
+
+                    if (user != null && !isSelf) {
                         val wasAvailable = userStatusMap[userId.toString()] ?: false
                         if (user.available && !wasAvailable) {
                             sendNotification(user)
@@ -77,6 +79,7 @@ class UserStatusService : Service() {
         }
         database.addValueEventListener(userListener)
     }
+
 
     private fun sendNotification(user: User) {
         val intent = Intent(this, OtherUserMapActivity::class.java).apply {
